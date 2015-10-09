@@ -33,12 +33,15 @@
   - [findAndModify](#findandmodify)
   - [findOneAndModify](#findoneandmodify)
   - [findOrCreate](#findorcreate-1)
+  - [$bulkCreate](#bulkcreate)
   - [update](#findandmodify)
   - [updateOne](#findoneandmodify)
 - [Queries](#queries)
 - [Operations](#operations)
 - [Schema](#schema)
 - [Atomic Transactions](#atomic-transactions)
+  - [addSproc](#addsproc)
+  - [runSproc](#runsproc)
 - [Middleware](#middleware)
   - [pre](#pre)
   - [post](#post)
@@ -273,7 +276,14 @@ users.findOrCreate({ admin: false, name: 'Ariel' })
 users.$findOrCreate({ admin: false, name: 'Ariel' })
   .then(console.log);
 ```
-
+##$bulkCreate
+create multiple documents concurrently.  
+**Usage:** `users.$bulkCreate(objects)`    
+**Returns:** `Integer`  
+```js
+users.$bulkCreate([{ admin: false, name: 'Ariel' }, { admin: true, name: 'Peter' }, { admin: true, name: 'Franco' }])
+  .then(console.log);
+```
 #Queries
 ###Operators
 * Logical & Conjunctive: 
@@ -530,6 +540,29 @@ sbs.receiveQueueMessage('users', function(msg) {
   stores.$update({ id: msg.id }, { users: { $push: msg.user } });
   // ...
 });
+```
+
+##addSproc
+add custom stored procedure.  
+**Usage:** `users.addSproc({ id: 'sproc', body: sprocFunction })`
+
+```js
+var sproc = {
+  id: 'countUsers',
+  body: function () {
+    ...
+  }
+};
+
+users.addSproc(sproc);
+```
+##runSproc
+run custom stored procedure.  
+**Usage:** `users.runSproc(sprocId)`
+
+```js
+users.runSproc('countUsers')
+  .then(console.log);
 ```
 
 #Examples
