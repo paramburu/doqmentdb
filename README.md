@@ -1,4 +1,4 @@
-##DoQmentDB - A Promise-Based DocumentDB Client 
+##DoQmentDB - A Promise-Based DocumentDB Client
 [![NPM version][npm-image]][npm-url]
 [![Build status][travis-image]][travis-url]
 [![Test coverage][coveralls-image]][coveralls-url]
@@ -24,6 +24,8 @@
 - [Collection](#collection)
   - [create](#create-1)
   - [insert](#create-1)
+  - [createOrUpdate](#createorupdate)
+  - [upsert](#createorupdate)
   - [getCollection](#getcollection)
   - [find](#find-1)
   - [findOne](#findone)
@@ -76,7 +78,7 @@ users.pre('save', function(next) {
 // Each http function returns a `Promise` with two specific methods: success and error.
 users.create({ name: '6534' })
   .then(console.log);
-  
+
 users.findById(1)
   .then(console.log);
 
@@ -116,7 +118,7 @@ find collection by given object params.
 ```js
 db.find()
   .then(console.log); // Return all collections
-  
+
 db.find({ id: 'users' })
   .then(console.log); // Return collections where id equal to `users`
 ```
@@ -155,7 +157,7 @@ var users = db.use('users'); // This operation is not async
 #Collection
 Create a CollectionManager by passing to `.use` function a collection name.
 ```js
-var users = db.use('users'); 
+var users = db.use('users');
 console.log(users.constructor.name); // Collection
 ```
 ##create
@@ -166,6 +168,15 @@ get object properties, and create new document under the used collection.
 ```js
 users.create({ name: 'Ariel', admin: true })
   .then(console.log); // { name: 'Ariel', admin: true, id: '8...31', _self: ... }
+```
+##createOrUpdate
+create a new document under the current collection, or update an existing document with the same id.  
+**Usage:** `users.createOrUpdate(object)`  
+**Aliases:** `upsert`  
+**Returns:** `Object`
+```js
+users.upsert({ id: 'my_user_id', admin: true })
+  .then(console.log); // { id: 'my_user_id', admin: true, _self: ... }
 ```
 ##getCollection
 return the used collection.  
@@ -203,7 +214,7 @@ users.findById('53...3')
 get object properties to search, find the equivalents and remove them.  
 **Usage:** `users.findAndRemove(object)`  
 **Returns:** `Array`  
-**Note:** if you want support atomic-transactions(**i.e:** do things concurrently, **e.g:** distributed system), 
+**Note:** if you want support atomic-transactions(**i.e:** do things concurrently, **e.g:** distributed system),
 you need use this method prefix with `$` sign.
 ```js
 users.findAndRemove({ name: 'Ariel' })
@@ -221,12 +232,12 @@ users.findAndRemove({})
 get object properties, and remove the first matching result.  
 **Usage:** `users.findOneAndRemove(object)`  
 **Returns:** `undefined` or `Boolean`  
-**Note:** if you want support atomic-transactions(**i.e:** do things concurrently, **e.g:** distributed system), 
+**Note:** if you want support atomic-transactions(**i.e:** do things concurrently, **e.g:** distributed system),
 you need use this method prefix with `$` sign.
 ```js
 users.findOneAndRemove({ name: 'Ariel', admin: true })
   .then(console.log);
-  
+
 // Using stored procedure
 users.$findOneAndRemove({ name: 'Ariel', admin: true })
   .then(console.log);
@@ -236,12 +247,12 @@ get object properties to search, find the equivalents and modify them(`extend` o
 **Usage:** `users.findAndModify(object, extend)`  
 **Aliases:** `update`  
 **Returns:** `Array`  
-**Note:** if you want support atomic-transactions(**i.e:** do things concurrently, **e.g:** distributed system), 
+**Note:** if you want support atomic-transactions(**i.e:** do things concurrently, **e.g:** distributed system),
 you need use this method prefix with `$` sign.
 ```js
 users.update({ name: 'Ariel', admin: true }, { admin: false })
   .then(console.log);
-  
+
 // Push 'a' and 'b' to `list` field(do it concurrently)
 ['a', 'b'].forEach(function(ch) {
   users.$update({}, { list: { $push: ch } });
@@ -252,7 +263,7 @@ get object properties and modify(`extend` operation) the first matching.
 **Usage:** `users.findOneAndModify(object, extend)`  
 **Aliases:** `updateOne`  
 **Returns:** `Object`  
-**Note:** if you want support atomic-transactions(**i.e:** do things concurrently, **e.g:** distributed system), 
+**Note:** if you want support atomic-transactions(**i.e:** do things concurrently, **e.g:** distributed system),
 you need use this method prefix with `$` sign.
 ```js
 users.findOneAndModify({ admin: false }, { admin: true })
@@ -266,7 +277,7 @@ users.$findOneAndModify({ admin: false }, { admin: true })
 get object properties, search for document, if it not exist create one.  
 **Usage:** `users.findOrCreate(object)`    
 **Returns:** `Object`  
-**Note:** if you want support atomic-transactions(**i.e:** do things concurrently, **e.g:** distributed system), 
+**Note:** if you want support atomic-transactions(**i.e:** do things concurrently, **e.g:** distributed system),
 you need use this method prefix with `$` sign.
 ```js
 users.findOrCreate({ admin: false, name: 'Ariel' })
@@ -286,12 +297,12 @@ users.$bulkCreate([{ admin: false, name: 'Ariel' }, { admin: true, name: 'Peter'
 ```
 #Queries
 ###Operators
-* Logical & Conjunctive: 
+* Logical & Conjunctive:
   * `$or` OR
   * `$and` AND
   * `$not` NOT
   * `$nor` NOT(... OR ...)
-* Comparison: 
+* Comparison:
   * `$gt` >
   * `$gte` >=
   * `$lt` <
@@ -363,9 +374,9 @@ users.update({  name: 'foo' }, { name: { $substr: [1,1] } });
 Manage your documents with schema.  
 **fields:**
 * `type`
-  *  ***required*** 
+  *  ***required***
   *  used for type comparing, (e.g: `String`, `Boolean`, `Number`, etc..).
-* `default` 
+* `default`
   * ***optional***
   * value fallback
 * `regex`
@@ -484,7 +495,7 @@ There are two types of middleware, **pre** and **post**.
 ##pre
 **Usage:** `users.pre(operation, callback)`  
 **Note:** `pre` middleware are executed one after another, when each middleware calls next.  
-**Example:** 
+**Example:**
 ```js
 users.pre('save', function(next) {
   var doc = this;
@@ -512,7 +523,7 @@ users.pre('save', function(next) {
 ##post
 **Usage:** `users.post(operation, callback)`  
 **Note:** `post` middleware are executed in parallel.  
-**Example:** 
+**Example:**
 ```js
 users.post('save', function(doc) {
   logger(new Date(), doc, 'saved!')
@@ -523,7 +534,7 @@ Since **v0.2.6** DoQmentDB supports atomic-transactions using a built-in sporcs(
 **Note:** To perform some operation this way, you should prefix it with `$`.  
 **Read More:** [DocumentDB - Atomic Transactions](https://github.com/Azure/azure-content/blob/master/articles/documentdb-programming.md#introduction)
 ```js
-// Lets take some example of `consuming` from two differents 
+// Lets take some example of `consuming` from two differents
 // Service-Bus queues and update the same `model`/`document`
 //
 // Note: This also could happen in a distributed system, when two operations happens in parallel
